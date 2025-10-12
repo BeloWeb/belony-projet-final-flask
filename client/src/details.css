@@ -1,0 +1,42 @@
+.image-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 60%;
+  overflow: hidden;
+}
+
+.image-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 0;
+}
+
+.image-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0px;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 1) 0%,
+    /* full opacity */ rgba(0, 0, 0, 0) 10% /* transparent */
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.search-bar-container {
+  position: relative;
+  z-index: 3;
+}
+
+.restaurants-container {
+  position: relative;
+  z-index: 2;
+}

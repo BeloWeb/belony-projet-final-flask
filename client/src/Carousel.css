@@ -1,0 +1,65 @@
+.carousel-item {
+  height: 100vh;
+  position: flex;
+}
+
+.carousel-item img {
+  object-fit: cover;
+  object-position: center;
+  height: 100%;
+  width: 100%;
+}
+
+.carousel-caption {
+  position: absolute;
+  bottom: 20%;
+  right: 15%;
+  left: 15%;
+  padding: 0.5rem;
+  background: rgba(21, 21, 21, 0.268);
+  border-radius: 0.5rem;
+}
+
+.carousel-caption h3 {
+  font-size: 2rem;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-caption p {
+  font-size: larger;
+  color: #ddd;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Adjust the control sizes */
+.carousel-control-next-icon,
+.carousel-control-prev-icon {
+  height: 50px;
+  width: 50px;
+}
+
+/* Style for carousel indicators */
+.carousel-indicators [data-bs-target] {
+  background-color: #fff;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .carousel-caption {
+    right: 5%;
+    left: 5%;
+    bottom: 20%;
+  }
+
+  .carousel-caption h3 {
+    font-size: 1.5rem;
+  }
+
+  .carousel-caption p {
+    font-size: 0.9rem;
+  }
+}

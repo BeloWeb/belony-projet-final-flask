@@ -1,0 +1,101 @@
+.view-menu-wrapper {
+  position: relative; /* Establish relative positioning for absolute children */
+  height: calc(100vh - 100px); /* Subtract the header height */
+  padding: 0; /* Remove padding if not needed */
+}
+
+.menu-container {
+  width: calc(55% - 120px); /* Adjusted width calculation */
+  margin-left: 100px;
+  margin-right: 50px;
+  padding: 2px;
+  background: rgb(255, 255, 255); /* Make background slightly opaque */
+  box-shadow: -2px 0px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow-y: auto; /* Make menu scrollable */
+  position: absolute; /* Position it absolutely to control its position */
+  top: 17%; /* Align to the top */
+  left: 0; /* Align to the left side */
+  bottom: 0; /* Stretch to the bottom */
+}
+
+.menu-image {
+  height: 100vh;
+  background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 1) 10%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    url("https://i.ibb.co/q9WsbLX/kimchi-ready-eat-bowl.jpg");
+  background-size: contain;
+  background-position: right;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* background-attachment: fixed; */
+
+.menu-image::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.menu-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 100px);
+}
+
+.menu-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.menu-content {
+  padding: 10px;
+}
+
+.menu-section {
+  margin-bottom: 20px;
+}
+
+.menu-section-title {
+  font-size: 1.8rem; /* Increased from 1.5rem */
+  color: #444;
+  font-weight: bold; /* Make the title bolder */
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Optional text shadow for depth */
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  color: #413636; /* Optional: Adjust color for better contrast */
+}
+
+.menu-item {
+  background: rgba(234, 234, 234, 0.9); /* Make background slightly opaque */
+  margin-bottom: 5px;
+  padding: 10px 15px; /* Add more padding for a better look */
+  border-radius: 5px;
+  font-weight: bold; /* Make the menu item text bolder */
+  font-size: 1.2rem; /* Increase font size for better visibility */
+  color: #000000; /* Optional: Adjust color for better contrast */
+  transition: background-color 0.3s;
+  font: 1.3em sans-serif;
+}
+
+.menu-item:hover {
+  background: #ffffffed;
+}
