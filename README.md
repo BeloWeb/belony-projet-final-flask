@@ -33,9 +33,9 @@ Follow these instructions to get Woody Vert - Restaurant up and running on your 
 
 # Clone the repository
 
-git clone https://github.com/JazlinBYU/Kimchi-Compass.git
+git clone git@github.com:BeloWeb/belony-projet-final-flask.git
 
-cd Kimchi-Compass/client
+cd belony-projet-final-flask/client
 
 # Install dependencies
 
@@ -73,7 +73,7 @@ flask run
 
 Create a .env file in the server directory with the following format:
 
-DATABASE_URL="postgresql://username:password@localhost:5432/kimchi_compass"
+DATABASE_URL="postgresql://username:password@localhost:5432/belony-projet-final-flask"
 SECRET_KEY="your_secret_key"
 GOOGLE_CLIENT_ID="your_google_client_id"
 GOOGLE_CLIENT_SECRET="your_google_client_secret"
