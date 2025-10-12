@@ -1,16 +1,13 @@
-# Kimchi-Compass
+# Woody Vert Restaurant
 
-Kimchi-Compass is a full-stack web application designed for Korean food enthusiasts. It combines the power of React and Flask to provide a rich user experience, allowing users to discover, rate, and review Korean restaurants.
+Woody Vert - Restaurant is a full-stack web application designed for haitian food enthusiasts. It combines the power of React and Flask to provide a rich user experience, allowing users to discover, rate, and review Korean restaurants.
 
 ## Features
 
-- **Discover Korean Restaurants**: A curated list of Korean restaurants with detailed information.
+- **Discover estaurants**
 - **User Reviews and Ratings**: Users can share their experiences and rate restaurants.
 - **User Authentication**: Secure login functionality with Google OAuth 2.0.
 - **Responsive UI**: A sleek and responsive design for an optimal user experience on any device.
-
-# GIF
-<img src="https://github.com/JazlinBYU/Kimchi-Compass/blob/main/kimchi.gif">
 
 ## Tech Stack
 
@@ -22,7 +19,7 @@ Kimchi-Compass is a full-stack web application designed for Korean food enthusia
 
 ## Getting Started
 
-Follow these instructions to get Kimchi-Compass up and running on your local machine for development and testing purposes.
+Follow these instructions to get Woody Vert - Restaurant up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
