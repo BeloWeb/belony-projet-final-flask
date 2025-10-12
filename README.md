@@ -1,89 +1,136 @@
-# Woody Vert Restaurant
 
-Woody Vert - Restaurant is a full-stack web application designed for haitian food enthusiasts. It combines the power of React and Flask to provide a rich user experience, allowing users to discover, rate, and review Korean restaurants.
 
-## Features
+# 🍲 Woody Vert Restaurant API (Backend)
 
-- **Discover estaurants**
-- **User Reviews and Ratings**: Users can share their experiences and rate restaurants.
-- **User Authentication**: Secure login functionality with Google OAuth 2.0.
-- **Responsive UI**: A sleek and responsive design for an optimal user experience on any device.
+Bienvenue dans le dépôt backend de l'application Woody Vert Restaurant, construit avec Flask. Cette API RESTful gère les utilisateurs, les restaurants, les critiques (reviews), les menus, les plats, les favoris et l'authentification (y compris Google OAuth).
 
-## Tech Stack
+## 🚀 Démarrage
 
-- **Frontend**: React, React Router
-- **Backend**: Flask, SQLAlchemy, PostgreSQL
-- **Authentication**: Google OAuth 2.0
-- **State Management**: React Context API
-- **Styling**: CSS3
+Suivez ces étapes pour configurer et exécuter l'application localement.
 
-## Getting Started
+### 📋 Prérequis
 
-Follow these instructions to get Woody Vert - Restaurant up and running on your local machine for development and testing purposes.
+Vous devez avoir **Python 3.10+** et **pip** installés.
 
-### Prerequisites
+### 🛠️ Installation
 
-- Node.js
-- Python 3
-- PostgreSQL
+1.  **Clonez le dépôt :**
 
-### Installation
+    ```bash
+    git clone https://github.com/BeloWeb/Phase4-Final-Project-Flask-by-Woody-Belony.git
+    cd server
+    ```
 
-#### Frontend
+2.  **Créez un environnement virtuel** (fortement recommandé) :
 
-# Clone the repository
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Sous Linux/macOS
+    .\venv\Scripts\activate   # Sous Windows
+    ```
 
-git clone git@github.com:BeloWeb/belony-projet-final-flask.git
+3.  **Installez les dépendances :**
 
-cd belony-projet-final-flask/client
+    ```bash
+    pip install -r requirements.txt
+    # Si vous n'avez pas de requirements.txt, installez les paquets vus dans app.py :
+    # pip install Flask Flask-SQLAlchemy Flask-Migrate Flask-RESTful Flask-CORS Flask-Bcrypt python-dotenv Authlib Flask-Login requests
+    ```
 
-# Install dependencies
+### ⚙️ Configuration de l'Environnement
 
-npm install
+Créez un fichier **`.env`** à la racine du dossier `server` pour stocker les clés secrètes :
 
-# Start the React development server
+```dotenv
+# .env
+SECRET_KEY="VOTRE_CLÉ_SECRÈTE_FLASK"
 
-npm start
+# Clés Google OAuth
+# *NOTE: Le client_secret est actuellement exposé dans app.py et doit être déplacé ici!*
+GOOGLE_CLIENT_ID="9656575814-i0rc5aehtlvhkv8fu23gnmgrtnspf5ps.apps.googleusercontent.com"
+# Définissez GOOGLE_CLIENT_SECRET
+# GOOGLE_CLIENT_SECRET="VOTRE_SECRÈTE_ICI"
+```
 
-#### Backend
+### 🗃️ Base de Données (SQLite)
 
-# Navigate to the server directory
+Le projet utilise **SQLite** pour la base de données de développement (`sqlite:///food_app.db`).
 
-cd server
+1.  **Initialisation de la base de données :**
+    ```bash
+    flask db init
+    ```
+2.  **Création des tables à partir des modèles :**
+    ```bash
+    flask db migrate -m "Initial database setup"
+    flask db upgrade
+    ```
+3.  *Optionnel : Exécutez le script `seed.py` pour ajouter des données de test si vous en avez un.*
 
-# Set up a Python virtual environment
+### 🚀 Démarrage du Serveur
 
-python -m venv venv
-source venv/bin/activate # Unix/Linux/MacOS
-venv\Scripts\activate # Windows
+Lancez le serveur Flask :
 
-# Install dependencies
-
-pip install -r requirements.txt
-
-# Run database migrations
-
-flask db upgrade
-
-# Start the Flask server
-
+```bash
 flask run
+```
 
-# Configuration
+L'API sera accessible à l'adresse par défaut : `http://127.0.0.1:5000`
 
-Create a .env file in the server directory with the following format:
+-----
 
-DATABASE_URL="postgresql://username:password@localhost:5432/belony-projet-final-flask"
-SECRET_KEY="your_secret_key"
-GOOGLE_CLIENT_ID="your_google_client_id"
-GOOGLE_CLIENT_SECRET="your_google_client_secret"
+## 🗺️ Structure de l'API
 
-# Seeding the Database
+L'API est construite avec **Flask-RESTful** et offre les endpoints suivants pour gérer les ressources du restaurant :
 
-To seed the database with initial data:
+| Endpoint | Méthode | Description |
+| :--- | :--- | :--- |
+| `/food_users` | `GET` | Récupère la liste de tous les utilisateurs. |
+| `/food_users` | `POST` | Crée un nouvel utilisateur (inscription). |
+| `/food_users/<int:id>` | `GET` | Récupère un utilisateur spécifique. |
+| `/food_users/<int:id>` | `PATCH` | Met à jour le profil ou le mot de passe de l'utilisateur. |
+| `/food_users/<int:id>` | `DELETE` | Supprime un utilisateur. |
+| `/restaurants` | `GET` | Liste tous les restaurants (vue résumée). |
+| `/restaurants` | `POST` | Crée un nouveau restaurant. |
+| `/restaurants/<int:id>` | `GET` | Récupère les détails d'un restaurant, y compris les revues et les favoris. |
+| `/reviews` | `GET` | Liste toutes les revues ou filtre par `?restaurant_id=X`. |
+| `/reviews` | `POST` | Crée une nouvelle revue. |
+| `/reviews/<int:id>` | `PATCH/DELETE` | Met à jour ou supprime une revue spécifique. |
+| `/dishes` | `GET`/`POST` | Gère la liste et la création de plats. |
+| `/favorites` | `POST` | Ajoute un restaurant aux favoris (`{restaurant_id: X}`). |
+| `/favorites/<int:id>` | `DELETE` | Supprime le restaurant `<int:id>` des favoris de l'utilisateur. |
+| `/menus` | `GET` | Récupère tous les menus ou filtre par `?restaurant_id=X`. |
 
-python seed.py
+-----
 
-# Usage
+## 🔒 Authentification et Sécurité
 
-The application will be running on http://localhost:3000 for the frontend and http://localhost:5000 for the backend.
+Le système utilise l'authentification par **Session/Cookie**.
+
+| Endpoint | Description |
+| :--- | :--- |
+| `/login` | **`POST`** : Connecte un utilisateur (Session). Retourne l'objet utilisateur. |
+| `/logout` | **`DELETE`** : Déconnecte l'utilisateur (supprime la session). |
+| `/check_session` | **`GET`** : Vérifie la session de l'utilisateur et retourne les données de l'utilisateur connecté. |
+| `/login/google` | **`POST`** : Gère l'authentification avec un jeton Google (nécessite une configuration OAuth côté client). |
+| `/current_user` | **`GET`** : Retourne l'utilisateur actuellement connecté par l'ID de session. |
+
+### ⚠️ Note de Sécurité sur Google OAuth
+
+Le `client_secret` de Google **ne doit pas** être stocké directement dans `app.py` ni dans le dépôt Git. Il est fortement recommandé de le définir dans le fichier **`.env`** et de l'importer dans `app.py` via `os.environ.get('GOOGLE_CLIENT_SECRET')`.
+
+-----
+
+## 🧑‍💻 Modèles de Données
+
+Le backend s'appuie sur la structure de modèles SQLAlchemy suivante :
+
+  * **`FoodUser`** (Utilisateurs)
+  * **`Restaurant`**
+  * **`Menu`**
+  * **`Dish`** (Plat)
+  * **`Review`** (Critique)
+  * **`Favorite`** (Relation entre `FoodUser` et `Restaurant`)
+  * **`MenuDish`** (Table d'association entre `Menu` et `Dish`)
+
+-----
