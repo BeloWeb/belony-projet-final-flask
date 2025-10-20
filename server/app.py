@@ -1,8 +1,7 @@
-
 from flask import jsonify, request, session, make_response
 from flask_restful import Resource
-from authlib.integrations.flask_client import OAuth
-from flask_login import LoginManager
+# from authlib.integrations.flask_client import OAuth # Supprimé car non utilisé dans la logique actuelle
+# from flask_login import LoginManager # Supprimé car vous utilisez la session Flask manuellement
 
 from config import app, db, api, bcrypt
 
@@ -17,26 +16,17 @@ from favorite import Favorite
 import requests, json 
 
 
-# Initialize OAuth and Flask-Login
-oauth = OAuth(app)
-login_manager = LoginManager(app)
+# Initialisation OAuth (Conservée pour la configuration Google, mais les composants Flask-Login sont supprimés)
+# oauth = OAuth(app) # Commenté ou supprimé si non nécessaire pour la route /login/google
 
 
-# OAuth Configuration for Google
-google = oauth.register(
-    name='google',
-    client_id='9656575814-i0rc5aehtlvhkv8fu23gnmgrtnspf5ps.apps.googleusercontent.com',
-    # client_secret='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',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    client_kwargs={'scope': 'openid email profile'},
-)
+# OAuth Configuration for Google (ClientId mis en dur, à changer pour une variable d'environnement)
+# Vous n'utilisez qu'une seule route personnalisée, pas le flow complet d'Authlib/OAuth.
 
-# User loader for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    return FoodUser.query.get(user_id)
+# User loader for Flask-Login (Supprimé car vous utilisez la session Flask)
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return FoodUser.query.get(user_id)
 
 class FoodUsers(Resource):
     def get(self):
@@ -48,12 +38,25 @@ class FoodUsers(Resource):
 
     def post(self):
         try:
-            data = request.get_json()
-            new_food_user = FoodUser(username = data['username'], email = data['email'])
-            new_food_user.password_hash = data.get('password')
+            data = request.json # Simplifié
+            password = data.get('password')
+
+            if not password:
+                 # Assurez-vous qu'un mot de passe est fourni pour l'inscription normale
+                return {'message': 'Le mot de passe est requis pour l\'inscription'}, 400
+
+            new_food_user = FoodUser(
+                username = data.get('username'), 
+                email = data['email']
+            )
+            # La propriété hybride dans votre modèle gère le hachage
+            new_food_user.password_hash = password 
+            
             db.session.add(new_food_user)
             db.session.commit()
-            session["food_user_id"]=new_food_user.id
+            
+            # Démarre la session utilisateur
+            session["food_user_id"] = new_food_user.id 
             return new_food_user.to_dict(), 201
         except Exception as e:
             db.session.rollback()
@@ -63,30 +66,54 @@ api.add_resource(FoodUsers, "/food_users")
 
 class FoodUsersById(Resource):
     def get(self, id):
-        food_user = FoodUser.query.get_or_404(id, description=f"FoodUser {id} not found")
-        return food_user.to_dict(rules=("restaurants",)), 200
+        # Utilisation de db.session.get() recommandé
+        food_user = db.session.get(FoodUser, id) 
+        if not food_user:
+            return {'message': f"FoodUser {id} non trouvé"}, 404
+
+        # Ajout de 'reviews' et 'restaurants' aux règles pour une vue complète
+        return food_user.to_dict(rules=("reviews", "restaurants")), 200
 
     def patch(self, id):
-        food_user = FoodUser.query.get_or_404(id, description=f"FoodUser {id} not found")
+        food_user = db.session.get(FoodUser, id) 
+        if not food_user:
+            return {'message': f"FoodUser {id} non trouvé"}, 404
+
         try:
-            data = request.get_json()
+            data = request.json
+            
+            # --- Mise à jour du nom d'utilisateur/email ---
             if 'username' in data:
                 food_user.username = data['username']
             if 'email' in data:
                 food_user.email = data['email'] 
+                
+            # --- Mise à jour du mot de passe ---
             if 'newPassword' in data and 'currentPassword' in data:
-                if not food_user.authenticate(data['currentPassword']):
-                    return {'message': 'Current password is incorrect'}, 400
-                food_user.password_hash = data['newPassword']
+                # Vérifie si le mot de passe hashé existe avant d'authentifier
+                if not food_user._password_hash or not food_user.authenticate(data['currentPassword']):
+                    return {'message': 'Le mot de passe actuel est incorrect'}, 400
+                
+                # Le setter de votre modèle s'occupe du hachage
+                food_user.password_hash = data['newPassword'] 
 
             db.session.commit()
-            return {'message': 'User updated successfully'}, 200
+            # Retourne les données utilisateur mises à jour
+            return food_user.to_dict(), 200 
         except Exception as e:
+            db.session.rollback()
             return {'message': str(e)}, 400
 
     def delete(self, id):
-        food_user = FoodUser.query.get_or_404(id, description=f"FoodUser {id} not found")
+        food_user = db.session.get(FoodUser, id)
+        if not food_user:
+            return {'message': f"FoodUser {id} non trouvé"}, 404
+            
         try:
+            # S'assurer que l'utilisateur déconnecte avant de supprimer
+            if session.get('food_user_id') == food_user.id:
+                 session.pop('food_user_id', None) 
+
             db.session.delete(food_user)
             db.session.commit()
             return {}, 204
@@ -106,7 +133,7 @@ class Reviews(Resource):
         return [review.to_dict() for review in reviews], 200
 
     def post(self):
-        data = request.get_json()
+        data = request.json
         try:
             new_review = Review(
                 content=data['content'],
@@ -121,24 +148,31 @@ class Reviews(Resource):
             db.session.rollback()
             return {'message': str(e)}, 400
 
-    def patch(self, id):
-        review = Review.query.get_or_404(id, description=f"Review {id} not found")
+    # L'ID est maintenant correctement attendu dans l'URL
+    def patch(self, id): 
+        review = db.session.get(Review, id)
+        if not review:
+            return {'message': f"Review {id} non trouvé"}, 404
+
         try:
-            data = request.get_json()
+            data = request.json
             if 'content' in data:
                 review.content = data['content']
             if 'rating' in data:
                 review.rating = data['rating']
-            # Add other fields as necessary
-
+            
             db.session.commit()
-            return {'message': 'Review updated successfully'}, 200
+            return review.to_dict(), 200
         except Exception as e:
             db.session.rollback()
             return {'message': str(e)}, 400
 
-    def delete(self, id):
-        review = Review.query.get_or_404(id, description=f"Review {id} not found")
+    # L'ID est maintenant correctement attendu dans l'URL
+    def delete(self, id): 
+        review = db.session.get(Review, id)
+        if not review:
+            return {'message': f"Review {id} non trouvé"}, 404
+
         try:
             db.session.delete(review)
             db.session.commit()
@@ -153,20 +187,21 @@ api.add_resource(Reviews, '/reviews', '/reviews/<int:id>')
 class Restaurants(Resource):
     def get(self):
         try:
-            restaurants = [restaurant.to_dict(only=("id", "name", "rating", "image_url", "phone_number")) for restaurant in Restaurant.query]
+            # Simplifié pour la liste
+            restaurants = [restaurant.to_dict(only=("id", "name", "rating", "image_url", "phone_number", "address")) for restaurant in Restaurant.query]
             return restaurants, 200
         except Exception as e:
             return {'message': str(e)}, 400
 
     def post(self):
         try:
-            data = request.get_json()
+            data = request.json
             new_restaurant = Restaurant(
                 name=data['name'],
-                rating=data['rating'],
-                image_url=data['image_url'],
-                phone_number=data['phone_number'],
-                address=data['address']
+                rating=data.get('rating'),
+                image_url=data.get('image_url'),
+                phone_number=data.get('phone_number'),
+                address=data.get('address')
             )
             db.session.add(new_restaurant)
             db.session.commit()
@@ -179,15 +214,22 @@ api.add_resource(Restaurants, "/restaurants")
 
 class RestaurantsById(Resource):
     def get(self, id):
-        restaurant = Restaurant.query.get_or_404(id, description=f"Restaurant {id} not found")
-        restaurant = restaurant.to_dict(only=(
-            "id", "name", "rating", "phone_number", "image_url", 
-            "reviews.content", "reviews.rating", "reviews.review_date", "reviews.food_user_id",
-            "favorites.food_user.username", "menus.restaurant_id", "menus.id", "menus.name", "reviews.id"
-        ))
-        restaurant['favorited_by'] = [fav['food_user']['username'] for fav in restaurant['favorites']]
-        del restaurant['favorites']
-        return restaurant, 200
+        restaurant = db.session.get(Restaurant, id)
+        if not restaurant:
+             return {'message': f"Restaurant {id} non trouvé"}, 404
+             
+        # Utilisation des règles de sérialisation par défaut du modèle pour inclure les menus et les critiques
+        restaurant_dict = restaurant.to_dict() 
+        
+        # Logique pour formater 'favorited_by' (maintenue)
+        if 'favorites' in restaurant_dict:
+            # Assurez-vous que food_user est sérialisé pour obtenir l'username
+            restaurant_dict['favorited_by'] = [fav.get('food_user', {}).get('username') 
+                                                for fav in restaurant_dict['favorites'] 
+                                                if fav.get('food_user')]
+            del restaurant_dict['favorites']
+            
+        return restaurant_dict, 200
 
 api.add_resource(RestaurantsById, "/restaurants/<int:id>")
 
@@ -196,28 +238,27 @@ def get_menus():
     restaurant_id = request.args.get('restaurant_id')
     if restaurant_id:
         menus = Menu.query.filter_by(restaurant_id=restaurant_id).all()
-        # Serialize and return menus along with dish details
     else:
         menus = Menu.query.all()
-        # Serialize and return all menus
+        
     return jsonify([menu.to_dict() for menu in menus])
 
 
 class Favorites(Resource):
     def post(self):
-        # Check if a user is logged in
-        if 'food_user_id' not in session:
-            return {'error': 'FoodUser not logged in'}, 401
+        # Vérification si un utilisateur est connecté
+        user_id = session.get('food_user_id')
+        if not user_id:
+            return {'error': 'Utilisateur non connecté'}, 401
 
-        user_id = session['food_user_id']
         restaurant_id = request.json.get('restaurant_id')
 
-        # Check if the user has already favorited this restaurant
+        # Vérification de l'existence du favori
         favorite = Favorite.query.filter_by(food_user_id=user_id, restaurant_id=restaurant_id).first()
         if favorite:
-            return {'message': 'You already have this restaurant favorited!'}, 400
+            return {'message': 'Ce restaurant est déjà dans vos favoris !'}, 400
 
-        # If not already favorited, create a new favorite record
+        # Création du favori
         try:
             new_fav = Favorite(food_user_id=user_id, restaurant_id=restaurant_id)
             db.session.add(new_fav)
@@ -232,42 +273,33 @@ api.add_resource(Favorites, "/favorites")
 
 class FavoritesById(Resource):
     def delete(self, id):
+        # L'ID est traité comme restaurant_id pour la suppression
+        restaurant_id = id
+        
+        # Vérification de session
+        user_id = session.get('food_user_id')
+        if not user_id:
+             return {'error': 'Utilisateur non connecté'}, 401
+             
         try:
-            user_id = session['food_user_id']
-            print(user_id)
-            favorite = Favorite.query.filter_by(food_user_id=user_id, restaurant_id=id).first()
+            # Trouve le favori spécifique pour l'utilisateur et le restaurant
+            favorite = Favorite.query.filter_by(food_user_id=user_id, restaurant_id=restaurant_id).first()
 
             if favorite:
                 db.session.delete(favorite)
                 db.session.commit()
-                return {}, 201
+                # Retourne 204 No Content
+                return {}, 204 
             else:
-                return {'message': f'FoodUser {id} does not have restaurant {id}'}, 400
+                return {'message': f'Le restaurant {restaurant_id} n\'est pas dans les favoris de l\'utilisateur {user_id}'}, 404
 
         except Exception as e:
             db.session.rollback()
             return {'message': str(e)}, 400
-    def patch(self, id):
-        food_user = FoodUser.query.get_or_404(id, description=f"FoodUser {id} not found")
-        data = request.get_json()
-        try:
-            # Verify current password if attempting to change password
-            if 'newPassword' in data:
-                if 'currentPassword' not in data or not food_user.authenticate(data['currentPassword']):
-                    return jsonify({'message': 'Current password is incorrect'}), 400
-                food_user.password_hash = bcrypt.generate_password_hash(data['newPassword']).decode('utf-8')
-
-            # Update other user attributes
-            if 'username' in data:
-                food_user.username = data['username']
-            if 'email' in data:
-                food_user.email = data['email']
-
-            db.session.commit()
-            return jsonify({'message': 'User updated successfully'}), 200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'message': str(e)}), 400
+            
+    # La méthode PATCH est SUPPRIMÉE car elle était redondante et erronée 
+    # (elle modifiait l'utilisateur au lieu du favori).
+    # Les mises à jour de l'utilisateur se font via /food_users/<int:id>
         
 api.add_resource(FavoritesById, "/favorites/<int:id>")
 
@@ -281,7 +313,7 @@ class Dishes(Resource):
 
     def post(self):
         try:
-            data = request.get_json()
+            data = request.json
             new_dish = Dish(name=data['name'], description=data['description'], price=data['price'])
             db.session.add(new_dish)
             db.session.commit()
@@ -295,87 +327,105 @@ api.add_resource(Dishes, "/dishes")
 class Login(Resource): 
     def post(self): 
         try:
-            data = request.get_json()
+            data = request.json
+            # Cherche par username ou email pour plus de flexibilité
+            login_id = data.get('username_or_email') 
+            password = data.get('password')
+            
+            if not login_id or not password:
+                 return {'message': 'Nom d\'utilisateur/email et mot de passe requis'}, 403
+
             user = FoodUser.query.filter(
-                (FoodUser.username == data.get('username'))  
+                 (FoodUser.username == login_id) | 
+                 (FoodUser.email == login_id) 
             ).first()
 
-            if user and user.authenticate(data.get('password')):
+            if user and user.authenticate(password):
                 session['food_user_id'] = user.id
                 return user.to_dict(), 200
             else:
-                return {'message': 'Invalid Credentials'}, 403
+                return {'message': 'Identifiants Invalides'}, 403
         except Exception as e:
             return {'message': str(e)}, 400
 
 api.add_resource(Login, '/login')
 
 class Logout(Resource):
-    def delete(self):  
+    def delete(self): 
+        # Si la session existe, la supprime.
         session.pop('food_user_id', None)
         return {}, 204 
 
 api.add_resource(Logout, '/logout')
 
 class CheckSession(Resource): 
-    def get(self):  
-        if "food_user_id" not in session:
-            return {"message": "Not Authorized"}, 403
-        if user := db.session.get(FoodUser, session["food_user_id"]):
+    def get(self): 
+        # Utilisation de l'opérateur walrus (:=) pour la vérification concise
+        if user := db.session.get(FoodUser, session.get("food_user_id")):
             return user.to_dict(rules=("-email",)), 200
-        return {"message": "Not Authorized"}, 403
+        return {"message": "Non Autorisé"}, 401 # Remplacé 403 par 401 (Non autorisé) plus précis
 
 api.add_resource(CheckSession, '/check_session') 
 
-# Google OAuth routes
+# Google OAuth route (Personnalisée avec un token envoyé par le client)
 @app.route('/login/google', methods=["POST"])
 def google_login():
-    data = json.loads(request.data)
+    data = request.json # Simplifié
+    access_token = data.get('access_token')
+    
+    if not access_token:
+        return make_response({"message": "Token d'accès manquant"}, 400)
+
+    # Récupération des informations utilisateur auprès de Google
     req = requests.get(
-        f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={data['access_token']}",
-        headers={"Content-Type": "text"})
-    # redirect_uri = url_for('authorize', _external=True
-    res=req.json()
-    if res["verified_email"]:
-        food_user = FoodUser.query.filter_by(email=res["email"]).first()
+        f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}",
+        headers={"Content-Type": "application/json"} # Type de contenu correct
+    )
+    
+    if req.status_code != 200:
+        return make_response({"message": "Échec de la vérification du token Google"}, 400)
+
+    res = req.json()
+    
+    if res.get("verified_email"):
+        email = res["email"]
+        
+        food_user = FoodUser.query.filter_by(email=email).first()
+        
         if not food_user:
-            food_user = FoodUser(username = res['name'], email = res['email'])
-            food_user.password_hash = "password"
+            # Création d'un nouvel utilisateur OAuth (SANS mot de passe)
+            food_user = FoodUser(
+                username = res.get('name'), 
+                email = email,
+                google_id = res.get('id') # Stocker l'ID Google si vous l'utilisez
+            )
+            # 🛑 IMPORTANT : Ne définissez PAS de mot de passe.
+            # Le _password_hash dans le modèle reste None.
+            
             db.session.add(food_user)
-            db.session.commit()
-        food_user=food_user.to_dict()
-        session['food_user_id'] = food_user['id']
-        return make_response(food_user, 200)
-    return make_response({"message":"this doesnt work"}, 200)
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                # Gérer les erreurs de contrainte unique (email déjà utilisé)
+                return make_response({'message': 'Échec de l\'inscription: ' + str(e)}, 400)
 
-@app.route('/authorize')
-def authorize():
-    token = google.authorize_access_token()
-    resp = google.get('fooduserinfo')
-    food_user_info = resp.json()
-    food_user = FoodUser.query.filter_by(email=food_user_info['email']).first()
+        # Démarre la session
+        session['food_user_id'] = food_user.id
+        return make_response(food_user.to_dict(), 200)
 
-    if not food_user:
-        food_user = FoodUser(email=food_user_info['email'], google_id=food_user_info['sub'])
-        db.session.add(food_user)
-        db.session.commit()
+    return make_response({"message": "Email non vérifié par Google"}, 400)
 
-    access_token = create_access_token(identity=food_user.id)
-    return jsonify(access_token=access_token), 200
+# La route /authorize et /current_user sont supprimées car elles étaient redondantes ou brisées.
 
-@app.route('/current_user')
-def current_user():
-    food_user_id = session.get('food_user_id')
-    if food_user_id:
-        food_user = FoodUser.query.get(food_user_id)
-        return jsonify(food_user.to_dict()), 200
-    return jsonify(None), 401
 
-# Error handler
+# Gestionnaire d'erreurs
 @app.errorhandler(404)
 def handle_404(error):
-    return {'message': str(error)}, 404
+    # Utilisation de la méthode make_response pour uniformité
+    return make_response({'message': 'La ressource demandée n\'a pas été trouvée'}, 404)
 
 
 if __name__ == '__main__':
+    # Le mode debug est dangereux en production
     app.run(port=5000, debug=True)

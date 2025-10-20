@@ -12,26 +12,46 @@ class Dish(db.Model, SerializerMixin):
     price = db.Column(db.Float)
 
     # Relationships
-    menu_dishes = db.relationship('MenuDish', back_populates='dish')
+    # Ajout de cascade pour garantir la suppression des liens d'association
+    menu_dishes = db.relationship('MenuDish', back_populates='dish', cascade='all, delete-orphan')
+
+    # Serialization
+    # CRITIQUE : Exclure la référence circulaire vers MenuDish
+    serialize_only = ('id', 'name', 'description', 'price', '-menu_dishes')
+
+    def __repr__(self):
+        return f"<Dish {self.id}: {self.name}>"
 
     # Validations
     @validates('name')
     def validate_name(self, key, name):
-        if not name:
-            raise ValueError('Dish name is required')
-        if len(name) < 2:
-            raise ValueError('Dish name must be at least 2 characters')
-        return name
+        # Utilisation de .strip() pour une meilleure vérification des espaces
+        stripped_name = name.strip()
+        if not stripped_name:
+            raise ValueError('Le nom du plat est requis')
+        if len(stripped_name) < 2:
+            raise ValueError('Le nom du plat doit contenir au moins 2 caractères')
+        return stripped_name
 
     @validates('description')
     def validate_description(self, key, description):
-        # Add any specific validation rules for description here if needed
-        return description
+        if description is None:
+            return None
+        if not isinstance(description, str):
+            raise TypeError("La description doit être une chaîne de caractères")
+        
+        # Retourne la description nettoyée des espaces superflus
+        return description.strip()
 
     @validates('price')
     def validate_price(self, key, price):
+        if price is None:
+            return None # Autorise None si la colonne DB le permet
+            
         if not isinstance(price, (int, float)):
-            raise ValueError('Price must be a number')
+            raise ValueError('Le prix doit être un nombre')
         if price < 0:
-            raise ValueError('Price cannot be negative')
-        return price
+            raise ValueError('Le prix ne peut pas être négatif')
+            
+        # Arrondit le prix à deux décimales pour l'uniformité
+        return round(price, 2)
