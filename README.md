@@ -1,3 +1,24 @@
+<<<<<<< HEAD
+=======
+🍽️ # Woody Vert (Food Review API)
+
+Ce projet est une API RESTful construite avec Flask pour gérer les utilisateurs, les restaurants, les menus, les plats et les revues associées. Il utilise SQLAlchemy pour la gestion de la base de données (SQLite en développement) et Flask-Bcrypt pour le hachage sécurisé des mots de passe.
+
+🚀 Démarrage
+
+Suivez ces étapes pour configurer et lancer l'API en mode développement.
+
+1. Prérequis
+
+Assurez-vous d'avoir Python 3.9+ installé.
+
+2. Configuration de l'environnement
+
+2.1. Cloner le dépôt et se placer dans le répertoire du serveur
+
+git clone <URL_DU_DEPOT>
+cd belony-projet-final-flask/server
+>>>>>>> 990ef2670d71cfd6ff3b8efa8798ab53d7915ac9
 
 
 # 🍲 Woody Vert Restaurant API (Backend)
