@@ -26,7 +26,7 @@ Vous devez avoir **Python 3.10+** et **pip** installés.
     ```bash
     python -m venv venv
     source venv/bin/activate  # Sous Linux/macOS
-    source venv/script/activate   # Sous Windows
+     source venv/Scripts/activate # Sous Windows
     ```
 
 3.  **Installez les dépendances :**
