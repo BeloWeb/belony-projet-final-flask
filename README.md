@@ -1,4 +1,4 @@
-#🍽️ Woody Vert (Food Review API)
+🍽️ #Woody Vert (Food Review API)
 
 Ce projet est une API RESTful construite avec Flask pour gérer les utilisateurs, les restaurants, les menus, les plats et les revues associées. Il utilise SQLAlchemy pour la gestion de la base de données (SQLite en développement) et Flask-Bcrypt pour le hachage sécurisé des mots de passe.
 
