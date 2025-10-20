@@ -1,136 +1,157 @@
+🍽️ Woody Vert (Food Review API)
+
+Ce projet est une API RESTful construite avec Flask pour gérer les utilisateurs, les restaurants, les menus, les plats et les revues associées. Il utilise SQLAlchemy pour la gestion de la base de données (SQLite en développement) et Flask-Bcrypt pour le hachage sécurisé des mots de passe.
+
+🚀 Démarrage
+
+Suivez ces étapes pour configurer et lancer l'API en mode développement.
+
+1. Prérequis
+
+Assurez-vous d'avoir Python 3.9+ installé.
+
+2. Configuration de l'environnement
+
+2.1. Cloner le dépôt et se placer dans le répertoire du serveur
+
+git clone <URL_DU_DEPOT>
+cd belony-projet-final-flask/server
 
 
-# 🍲 Woody Vert Restaurant API (Backend)
+2.2. Créer et activer l'environnement virtuel
 
-Bienvenue dans le dépôt backend de l'application Woody Vert Restaurant, construit avec Flask. Cette API RESTful gère les utilisateurs, les restaurants, les critiques (reviews), les menus, les plats, les favoris et l'authentification (y compris Google OAuth).
+Il est fortement recommandé d'utiliser un environnement virtuel pour isoler les dépendances.
 
-## 🚀 Démarrage
+# Création de l'environnement
+python3 -m venv venv
 
-Suivez ces étapes pour configurer et exécuter l'application localement.
+# Activation de l'environnement (Linux/macOS)
+source venv/bin/activate
 
-### 📋 Prérequis
+# Activation de l'environnement (Windows - PowerShell)
+# .\venv\Scripts\Activate
 
-Vous devez avoir **Python 3.10+** et **pip** installés.
 
-### 🛠️ Installation
+2.3. Installer les dépendances
 
-1.  **Clonez le dépôt :**
+Installez tous les packages nécessaires listés dans requirements.txt (ou installez-les directement si le fichier est manquant) :
 
-    ```bash
-    git clone https://github.com/BeloWeb/Phase4-Final-Project-Flask-by-Woody-Belony.git
-    cd server
-    ```
+pip install Flask Flask-SQLAlchemy Flask-RESTful Flask-Bcrypt python-dotenv Flask-Migrate Flask-CORS requests
 
-2.  **Créez un environnement virtuel** (fortement recommandé) :
 
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Sous Linux/macOS
-    .\venv\Scripts\activate   # Sous Windows
-    ```
+3. Configuration des Variables d'Environnement
 
-3.  **Installez les dépendances :**
+Le projet utilise le package python-dotenv pour charger les variables de configuration depuis un fichier .env.
 
-    ```bash
-    pip install -r requirements.txt
-    # Si vous n'avez pas de requirements.txt, installez les paquets vus dans app.py :
-    # pip install Flask Flask-SQLAlchemy Flask-Migrate Flask-RESTful Flask-CORS Flask-Bcrypt python-dotenv Authlib Flask-Login requests
-    ```
+Créez un fichier nommé .env à la racine du dossier server et ajoutez-y votre clé secrète :
 
-### ⚙️ Configuration de l'Environnement
+# Fichier .env
+SECRET_KEY=remplacez_ceci_par_une_cle_secrete_longue_et_aleatoire
 
-Créez un fichier **`.env`** à la racine du dossier `server` pour stocker les clés secrètes :
 
-```dotenv
-# .env
-SECRET_KEY="VOTRE_CLÉ_SECRÈTE_FLASK"
+4. Lancer l'API
 
-# Clés Google OAuth
-# *NOTE: Le client_secret est actuellement exposé dans app.py et doit être déplacé ici!*
-GOOGLE_CLIENT_ID="9656575814-i0rc5aehtlvhkv8fu23gnmgrtnspf5ps.apps.googleusercontent.com"
-# Définissez GOOGLE_CLIENT_SECRET
-# GOOGLE_CLIENT_SECRET="VOTRE_SECRÈTE_ICI"
-```
+Le script run.py se charge de créer la base de données SQLite (app.db) si elle n'existe pas, et de démarrer le serveur de développement.
 
-### 🗃️ Base de Données (SQLite)
+python run.py
 
-Le projet utilise **SQLite** pour la base de données de développement (`sqlite:///food_app.db`).
 
-1.  **Initialisation de la base de données :**
-    ```bash
-    flask db init
-    ```
-2.  **Création des tables à partir des modèles :**
-    ```bash
-    flask db migrate -m "Initial database setup"
-    flask db upgrade
-    ```
-3.  *Optionnel : Exécutez le script `seed.py` pour ajouter des données de test si vous en avez un.*
+Vous devriez voir le message de confirmation indiquant que l'API est démarrée :
 
-### 🚀 Démarrage du Serveur
+Base de données et tables créées (app.db).
+...
+ * Running on [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-Lancez le serveur Flask :
 
-```bash
-flask run
-```
+⚙️ Modèles de Base de Données
 
-L'API sera accessible à l'adresse par défaut : `http://127.0.0.1:5000`
+Les modèles SQLAlchemy définissent les relations suivantes (représentant la structure de la base de données) :
 
------
+Modèle
 
-## 🗺️ Structure de l'API
+Description
 
-L'API est construite avec **Flask-RESTful** et offre les endpoints suivants pour gérer les ressources du restaurant :
+Relations Clés
 
-| Endpoint | Méthode | Description |
-| :--- | :--- | :--- |
-| `/food_users` | `GET` | Récupère la liste de tous les utilisateurs. |
-| `/food_users` | `POST` | Crée un nouvel utilisateur (inscription). |
-| `/food_users/<int:id>` | `GET` | Récupère un utilisateur spécifique. |
-| `/food_users/<int:id>` | `PATCH` | Met à jour le profil ou le mot de passe de l'utilisateur. |
-| `/food_users/<int:id>` | `DELETE` | Supprime un utilisateur. |
-| `/restaurants` | `GET` | Liste tous les restaurants (vue résumée). |
-| `/restaurants` | `POST` | Crée un nouveau restaurant. |
-| `/restaurants/<int:id>` | `GET` | Récupère les détails d'un restaurant, y compris les revues et les favoris. |
-| `/reviews` | `GET` | Liste toutes les revues ou filtre par `?restaurant_id=X`. |
-| `/reviews` | `POST` | Crée une nouvelle revue. |
-| `/reviews/<int:id>` | `PATCH/DELETE` | Met à jour ou supprime une revue spécifique. |
-| `/dishes` | `GET`/`POST` | Gère la liste et la création de plats. |
-| `/favorites` | `POST` | Ajoute un restaurant aux favoris (`{restaurant_id: X}`). |
-| `/favorites/<int:id>` | `DELETE` | Supprime le restaurant `<int:id>` des favoris de l'utilisateur. |
-| `/menus` | `GET` | Récupère tous les menus ou filtre par `?restaurant_id=X`. |
+FoodUser
 
------
+Utilisateur de l'application.
 
-## 🔒 Authentification et Sécurité
+1:N Review, 1:N Favorite
 
-Le système utilise l'authentification par **Session/Cookie**.
+Restaurant
 
-| Endpoint | Description |
-| :--- | :--- |
-| `/login` | **`POST`** : Connecte un utilisateur (Session). Retourne l'objet utilisateur. |
-| `/logout` | **`DELETE`** : Déconnecte l'utilisateur (supprime la session). |
-| `/check_session` | **`GET`** : Vérifie la session de l'utilisateur et retourne les données de l'utilisateur connecté. |
-| `/login/google` | **`POST`** : Gère l'authentification avec un jeton Google (nécessite une configuration OAuth côté client). |
-| `/current_user` | **`GET`** : Retourne l'utilisateur actuellement connecté par l'ID de session. |
+Établissement critique.
 
-### ⚠️ Note de Sécurité sur Google OAuth
+1:N Menu, 1:N Review
 
-Le `client_secret` de Google **ne doit pas** être stocké directement dans `app.py` ni dans le dépôt Git. Il est fortement recommandé de le définir dans le fichier **`.env`** et de l'importer dans `app.py` via `os.environ.get('GOOGLE_CLIENT_SECRET')`.
+Menu
 
------
+Cartes du restaurant (ex: Déjeuner, Dîner).
 
-## 🧑‍💻 Modèles de Données
+1:N Restaurant, N:M Dish (MenuDish)
 
-Le backend s'appuie sur la structure de modèles SQLAlchemy suivante :
+Dish
 
-  * **`FoodUser`** (Utilisateurs)
-  * **`Restaurant`**
-  * **`Menu`**
-  * **`Dish`** (Plat)
-  * **`Review`** (Critique)
-  * **`Favorite`** (Relation entre `FoodUser` et `Restaurant`)
-  * **`MenuDish`** (Table d'association entre `Menu` et `Dish`)
+Plats individuels.
 
------
+N:M Menu (MenuDish)
+
+Review
+
+Avis et note d'un utilisateur sur un restaurant.
+
+N:1 FoodUser, N:1 Restaurant
+
+Favorite
+
+Restaurant favori d'un utilisateur.
+
+N:1 FoodUser, N:1 Restaurant
+
+🗺️ Points de Terminaison (Endpoints) Exemples
+
+L'API utilise des ressources RESTful (définies dans app.py). Voici quelques exemples de points de terminaison à tester avec Postman ou Thunder Client sur http://127.0.0.1:5000 :
+
+Méthode
+
+Route
+
+Description
+
+POST
+
+/signup
+
+Crée un nouvel utilisateur.
+
+POST
+
+/login
+
+Connecte un utilisateur (retourne un cookie de session).
+
+GET
+
+/restaurants
+
+Récupère la liste de tous les restaurants.
+
+POST
+
+/restaurants
+
+Ajoute un nouveau restaurant (nécessite authentification).
+
+POST
+
+/reviews
+
+Ajoute une nouvelle revue pour un restaurant.
+
+GET
+
+/users/<id>/favorites
+
+Récupère la liste des favoris d'un utilisateur.
+
