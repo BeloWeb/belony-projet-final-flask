@@ -1,65 +1,126 @@
-#🍽️ Woody Vert (Food Review API)
-
-Ce projet est une API RESTful construite avec Flask pour gérer les utilisateurs, les restaurants, les menus, les plats et les revues associées. Il utilise SQLAlchemy pour la gestion de la base de données (SQLite en développement) et Flask-Bcrypt pour le hachage sécurisé des mots de passe.
-
-🚀 Démarrage
-
-Suivez ces étapes pour configurer et lancer l'API en mode développement.
-
-1. Prérequis
-
-Assurez-vous d'avoir Python 3.9+ installé.
-
-2. Configuration de l'environnement
-
-2.1. Cloner le dépôt et se placer dans le répertoire du serveur
-
-git clone <URL_DU_DEPOT>
-cd belony-projet-final-flask/server
 
 
-2.2. Créer et activer l'environnement virtuel
+# 🍲 Woody Vert Restaurant API (Backend)
 
-Il est fortement recommandé d'utiliser un environnement virtuel pour isoler les dépendances.
+Bienvenue dans le dépôt backend de l'application Woody Vert Restaurant, construit avec Flask. Cette API RESTful gère les utilisateurs, les restaurants, les critiques (reviews), les menus, les plats, les favoris et l'authentification (y compris Google OAuth).
 
-# Création de l'environnement
-python3 -m venv venv
+## 🚀 Démarrage
 
-# Activation de l'environnement (Linux/macOS)
-source venv/bin/activate
+Suivez ces étapes pour configurer et exécuter l'application localement.
 
-# Activation de l'environnement (Windows - PowerShell)
-# .\venv\Scripts\Activate
+### 📋 Prérequis
+
+Vous devez avoir **Python 3.10+** et **pip** installés.
+
+### 🛠️ Installation
+
+1.  **Clonez le dépôt :**
+
+    ```bash
+    git clone https://github.com/BeloWeb/belony-projet-final-flask.git
+    cd server
+    ```
+
+2.  **Créez un environnement virtuel** (fortement recommandé) :
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Sous Linux/macOS
+    .\venv\Scripts\activate   # Sous Windows
+    ```
+
+3.  **Installez les dépendances :**
+
+    ```bash
+    pip install -r requirements.txt
+    # Si vous n'avez pas de requirements.txt, installez les paquets vus dans app.py :
+    # pip install Flask Flask-SQLAlchemy Flask-Migrate Flask-RESTful Flask-CORS Flask-Bcrypt python-dotenv Authlib Flask-Login requests
+    ```
+
+### ⚙️ Configuration de l'Environnement
+
+Créez un fichier **`.env`** à la racine du dossier `server` pour stocker les clés secrètes :
+
+```dotenv
+# .env
+SECRET_KEY="VOTRE_CLÉ_SECRÈTE_FLASK"
+
+```
+
+### 🗃️ Base de Données (SQLite)
+
+Le projet utilise **SQLite** pour la base de données de développement (`sqlite:///food_app.db`).
+
+1.  **Initialisation de la base de données :**
+    ```bash
+    flask db init
+    ```
+2.  **Création des tables à partir des modèles :**
+    ```bash
+    flask db migrate -m "Initial database setup"
+    flask db upgrade
+    ```
+3.  *Optionnel : Exécutez le script `seed.py` pour ajouter des données de test si vous en avez un.*
+
+### 🚀 Démarrage du Serveur
+
+Lancez le serveur Flask :
+
+```bash
+flask run
+```
+
+L'API sera accessible à l'adresse par défaut : `http://127.0.0.1:5000`
+
+-----
+
+## 🗺️ Structure de l'API
+
+L'API est construite avec **Flask-RESTful** et offre les endpoints suivants pour gérer les ressources du restaurant :
+
+| Endpoint | Méthode | Description |
+| :--- | :--- | :--- |
+| `/food_users` | `GET` | Récupère la liste de tous les utilisateurs. |
+| `/food_users` | `POST` | Crée un nouvel utilisateur (inscription). |
+| `/food_users/<int:id>` | `GET` | Récupère un utilisateur spécifique. |
+| `/food_users/<int:id>` | `PATCH` | Met à jour le profil ou le mot de passe de l'utilisateur. |
+| `/food_users/<int:id>` | `DELETE` | Supprime un utilisateur. |
+| `/restaurants` | `GET` | Liste tous les restaurants (vue résumée). |
+| `/restaurants` | `POST` | Crée un nouveau restaurant. |
+| `/restaurants/<int:id>` | `GET` | Récupère les détails d'un restaurant, y compris les revues et les favoris. |
+| `/reviews` | `GET` | Liste toutes les revues ou filtre par `?restaurant_id=X`. |
+| `/reviews` | `POST` | Crée une nouvelle revue. |
+| `/reviews/<int:id>` | `PATCH/DELETE` | Met à jour ou supprime une revue spécifique. |
+| `/dishes` | `GET`/`POST` | Gère la liste et la création de plats. |
+| `/favorites` | `POST` | Ajoute un restaurant aux favoris (`{restaurant_id: X}`). |
+| `/favorites/<int:id>` | `DELETE` | Supprime le restaurant `<int:id>` des favoris de l'utilisateur. |
+| `/menus` | `GET` | Récupère tous les menus ou filtre par `?restaurant_id=X`. |
+
+-----
+
+## 🔒 Authentification et Sécurité
+
+Le système utilise l'authentification par **Session/Cookie**.
+
+| Endpoint | Description |
+| :--- | :--- |
+| `/login` | **`POST`** : Connecte un utilisateur (Session). Retourne l'objet utilisateur. |
+| `/logout` | **`DELETE`** : Déconnecte l'utilisateur (supprime la session). |
+| `/check_session` | **`GET`** : Vérifie la session de l'utilisateur et retourne les données de l'utilisateur connecté. |
+| `/login/google` | **`POST`** : Gère l'authentification avec un jeton Google (nécessite une configuration OAuth côté client). |
+| `/current_user` | **`GET`** : Retourne l'utilisateur actuellement connecté par l'ID de session. |
 
 
-2.3. Installer les dépendances
+## 🧑‍💻 Modèles de Données
 
-Installez tous les packages nécessaires listés dans requirements.txt (ou installez-les directement si le fichier est manquant) :
+Le backend s'appuie sur la structure de modèles SQLAlchemy suivante :
 
-pip install Flask Flask-SQLAlchemy Flask-RESTful Flask-Bcrypt python-dotenv Flask-Migrate Flask-CORS requests
+  * **`FoodUser`** (Utilisateurs)
+  * **`Restaurant`**
+  * **`Menu`**
+  * **`Dish`** (Plat)
+  * **`Review`** (Critique)
+  * **`Favorite`** (Relation entre `FoodUser` et `Restaurant`)
+  * **`MenuDish`** (Table d'association entre `Menu` et `Dish`)
 
-
-3. Configuration des Variables d'Environnement
-
-Le projet utilise le package python-dotenv pour charger les variables de configuration depuis un fichier .env.
-
-Créez un fichier nommé .env à la racine du dossier server et ajoutez-y votre clé secrète :
-
-# Fichier .env
-SECRET_KEY=remplacez_ceci_par_une_cle_secrete_longue_et_aleatoire
-
-
-4. Lancer l'API
-
-Le script run.py se charge de créer la base de données SQLite (app.db) si elle n'existe pas, et de démarrer le serveur de développement.
-
-python run.py
-
-
-Vous devriez voir le message de confirmation indiquant que l'API est démarrée :
-
-Base de données et tables créées (app.db).
-...
- * Running on [http://127.0.0.1:5000](http://127.0.0.1:5000)
-
-
+-----
