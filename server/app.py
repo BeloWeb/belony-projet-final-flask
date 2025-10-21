@@ -339,14 +339,25 @@ api.add_resource(Logout, '/logout')
 
 class CheckSession(Resource): 
     def get(self): 
-        if user := db.session.get(FoodUser, session.get("food_user_id")):
-            # ❌ Changement 13: Utilisation de food_user_lite_dict() (plus simple) ou 
-            # to_dict() par défaut sans les relations lourdes.
-            # to_dict() dans FoodUser exclut déjà le hash et le email par défaut.
+        # 1. Obtenir l'ID de l'utilisateur de la session
+        food_user_id = session.get("food_user_id")
+        
+        # 2. Vérifier si l'ID existe. Si non, renvoyer immédiatement 401.
+        if food_user_id is None:
+            return {"message": "Non Autorisé"}, 401
+            
+        # 3. Si l'ID existe, tenter de charger l'utilisateur. 
+        # (Ceci est l'ancienne ligne 342, mais maintenant elle est protégée)
+        if user := db.session.get(FoodUser, food_user_id):
+            # L'utilisateur est trouvé et la session est valide
             return user.to_dict(), 200
-        return {"message": "Non Autorisé"}, 401 
+        else:
+            # L'ID était dans la session mais l'utilisateur n'existe plus (ex: supprimé)
+            # On nettoie la session et on renvoie 401.
+            session.pop('food_user_id', None)
+            return {"message": "Non Autorisé"}, 401
 
-api.add_resource(CheckSession, '/check_session') 
+api.add_resource(CheckSession, '/check_session')
 
 # Google OAuth route (Personnalisée avec un token envoyé par le client)
 @app.route('/login/google', methods=["POST"])
