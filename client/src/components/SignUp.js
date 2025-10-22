@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -11,6 +11,19 @@ const SignUp = () => {
   const { updateUser } = useContext(UserContext);
   const [isSignUp, setIsSignUp] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  // 🛠️ AJOUTS POUR LA CORRECTION
+  const formikRef = useRef(null); // Référence pour accéder aux méthodes internes de Formik
+
+  // Réinitialise les valeurs du formulaire lorsque le mode (Login/SignUp) change
+  useEffect(() => {
+    if (formikRef.current) {
+      formikRef.current.resetForm({ 
+        values: { email: "", username: "", password: "" }
+      });
+    }
+  }, [isSignUp]);
+  // -------------------------
 
   const loginSchema = Yup.object().shape({
     username: Yup.string().required("Required"),
@@ -73,14 +86,14 @@ const SignUp = () => {
             { variant: "success" }
           );
         } else {
-          const message = data.message.startsWith("(sqlite3.IntegrityError)")
+          const message = data.message && data.message.startsWith("(sqlite3.IntegrityError)")
             ? "username already in use"
-            : data.message;
+            : data.message || "An unknown error occurred."; // Gérer le cas où data.message est indéfini
           enqueueSnackbar(message, { variant: "error" }); // Handle errors
         }
       })
       .catch((err) => {
-        enqueueSnackbar("An error occurred during login.", {
+        enqueueSnackbar("An error occurred during network communication.", { // Texte ajusté pour être plus précis
           variant: "error",
         });
       })
@@ -93,6 +106,7 @@ const SignUp = () => {
       <div className="signup-box">
         <h2 className="form-title">{isSignUp ? "Sign Up" : "Login"}</h2>
         <Formik
+          innerRef={formikRef} // 🛠️ Associer la référence
           initialValues={{ email: "", username: "", password: "" }}
           validationSchema={isSignUp ? signUpSchema : loginSchema}
           onSubmit={handleSubmit}>

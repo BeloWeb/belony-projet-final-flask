@@ -212,8 +212,8 @@ class RestaurantsById(Resource):
         if 'favorites' in restaurant_dict:
             # On assume que la sérialisation de Favorite inclut bien food_user en mode lite
             restaurant_dict['favorited_by'] = [fav.get('food_user', {}).get('username') 
-                                               for fav in restaurant_dict['favorites'] 
-                                               if fav.get('food_user')]
+                                                   for fav in restaurant_dict['favorites'] 
+                                                   if fav.get('food_user')]
             del restaurant_dict['favorites']
             
         return restaurant_dict, 200
@@ -305,14 +305,17 @@ class Dishes(Resource):
 api.add_resource(Dishes, "/dishes")
 
 class Login(Resource): 
+    # 🌟 CLASSE CORRIGÉE POUR L'ERREUR DE CONNEXION 🌟
     def post(self): 
         try:
             data = request.json
-            login_id = data.get('username_or_email') 
+            # 💡 CORRECTION 1: Utiliser 'username' (ce que le frontend envoie)
+            login_id = data.get('username') 
             password = data.get('password')
             
             if not login_id or not password:
-                return {'message': 'Nom d\'utilisateur/email et mot de passe requis'}, 403
+                # 💡 CORRECTION 2: Utiliser 401 Unauthorized (Non Autorisé) au lieu de 403
+                return {'message': 'Nom d\'utilisateur et mot de passe requis'}, 401
 
             user = FoodUser.query.filter(
                 (FoodUser.username == login_id) | 
@@ -324,9 +327,11 @@ class Login(Resource):
                 # ✅ Changement 12: to_dict() sans argument.
                 return user.to_dict(), 200
             else:
-                return {'message': 'Identifiants Invalides'}, 403
+                # 💡 CORRECTION 3: Utiliser 401 Unauthorized au lieu de 403
+                return {'message': 'Identifiants Invalides'}, 401
         except Exception as e:
             return {'message': str(e)}, 400
+    # ----------------------------------------------------
 
 api.add_resource(Login, '/login')
 
@@ -347,7 +352,6 @@ class CheckSession(Resource):
             return {"message": "Non Autorisé"}, 401
             
         # 3. Si l'ID existe, tenter de charger l'utilisateur. 
-        # (Ceci est l'ancienne ligne 342, mais maintenant elle est protégée)
         if user := db.session.get(FoodUser, food_user_id):
             # L'utilisateur est trouvé et la session est valide
             return user.to_dict(), 200
